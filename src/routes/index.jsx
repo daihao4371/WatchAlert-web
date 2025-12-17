@@ -28,9 +28,12 @@ import {CalendarApp} from "../pages/duty/calendar";
 import {Probing} from "../pages/probing";
 import {CreateProbingRule} from "../pages/probing/create";
 import {OnceProbing} from "../pages/probing/once";
+import {ProbingMetrics} from "../pages/probing/detail";
 import Profile from "../pages/profile";
 import {FaultCenter} from "../pages/faultCenter";
 import {FaultCenterDetail} from "../pages/faultCenter/detail";
+import List from "../pages/topology/list";
+import TopologyDetail from "../pages/topology/detail";
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default [
@@ -132,7 +135,7 @@ export default [
     },
     {
         path: '/onceProbing',
-        element: <ComponentsContent name="及时拨测" c={<OnceProbing/>} />
+        element: <ComponentsContent name="即时拨测" c={<OnceProbing/>} />
     },
     {
         path: '/probing',
@@ -145,6 +148,10 @@ export default [
     {
         path: '/probing/:id/edit',
         element: <ComponentsContent name="编辑拨测规则" c={<CreateProbingRule type="edit"/>} />
+    },
+    {
+        path: '/probing/:id/detail',
+        element: <ComponentsContent name="拨测详情" c={<ProbingMetrics />} />
     },
     {
         path: '/subscribes',
@@ -165,6 +172,14 @@ export default [
     {
         path: '/faultCenter/detail/:id',
         element: <ComponentsContent name="故障中心详情" c={<FaultCenterDetail />} />
+    },
+    {
+        path: '/topology',
+        element: <ComponentsContent name="服务拓扑" c={<List />} />
+    },
+    {
+        path: '/topology/:id/detail',
+        element: <ComponentsContent name="拓扑详情" c={<TopologyDetail />} />
     },
     {
         path: '/*',

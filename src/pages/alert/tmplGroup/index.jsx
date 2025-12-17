@@ -40,7 +40,6 @@ export const RuleTemplateGroup = () => {
                     to={`/tmplType/${record.type}/${record.name}/templates`}
                     style={{
                         color: "#1677ff",
-                        fontWeight: "500",
                         display: "flex",
                         alignItems: "center",
                         gap: "8px",
@@ -250,7 +249,7 @@ export const RuleTemplateGroup = () => {
     return (
         <div style={{ display: "flex", borderRadius: "8px" }}>
             {/* Sidebar */}
-            <div style={{ width: "200px" }}>
+            <div style={{ width: "150px" }}>
                 <Menu
                     onClick={handleClick}
                     mode="vertical"

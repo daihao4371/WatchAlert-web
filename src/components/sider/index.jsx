@@ -11,15 +11,14 @@ import {
     FileDoneOutlined,
     SettingOutlined,
     ExceptionOutlined,
-    ApiOutlined, TeamOutlined, DownOutlined, LogoutOutlined
+    ApiOutlined, TeamOutlined, DownOutlined, LogoutOutlined, NodeIndexOutlined
 } from '@ant-design/icons';
 import {Link, useNavigate} from 'react-router-dom';
-import {Menu, Layout, Typography, Dropdown, Space, message, Spin, theme, Popover, Avatar, Divider} from 'antd';
+import {Menu, Layout, Typography, Dropdown, message, Spin, theme, Popover, Avatar, Divider} from 'antd';
 import logoIcon from "../../img/logo.svg";
 import {getUserInfo} from "../../api/user";
 import {getTenantList} from "../../api/tenant";
 
-const { SubMenu } = Menu;
 const { Sider } = Layout;
 
 const adminMenuItems = [
@@ -45,6 +44,7 @@ const adminMenuItems = [
             { key: '3-3', path: '/noticeRecords', label: '通知记录' }
         ]
     },
+    { key: '13', path: '/topology', icon: <NodeIndexOutlined />, label: '服务拓扑' },
     { key: '4', path: '/dutyManage', icon: <CalendarOutlined />, label: '值班中心' },
     {
         key: '11',
@@ -52,7 +52,7 @@ const adminMenuItems = [
         label: '网络分析',
         children: [
             { key: '11-1', path: '/probing', label: '拨测任务' },
-            { key: '11-2', path: '/onceProbing', label: '及时拨测' }
+            { key: '11-2', path: '/onceProbing', label: '即时拨测' }
         ]
     },
     { key: '6', path: '/datasource', icon: <PieChartOutlined />, label: '数据源' },
@@ -94,25 +94,19 @@ const userMenuItems = [
             { key: '3-3', path: '/noticeRecords', label: '通知记录' }
         ]
     },
-    {
-        key: '4',
-        icon: <CalendarOutlined />,
-        label: '值班管理',
-        children: [
-            { key: '4-1', path: '/dutyManage', label: '值班日程' }
-        ]
-    },
+    { key: '13', path: '/topology', icon: <NodeIndexOutlined />, label: '服务拓扑' },
+    { key: '4', path: '/dutyManage', icon: <CalendarOutlined />, label: '值班中心' },
     {
         key: '11',
         icon: <ApiOutlined />,
         label: '网络分析',
         children: [
             { key: '11-1', path: '/probing', label: '拨测任务' },
-            { key: '11-2', path: '/onceProbing', label: '及时拨测' }
+            { key: '11-2', path: '/onceProbing', label: '即时拨测' }
         ]
     },
     { key: '6', path: '/datasource', icon: <PieChartOutlined />, label: '数据源' },
-    { key: '8', path: '/folders', icon: <DashboardOutlined />, label: '仪表盘' }
+    { key: '8', path: '/folders', icon: <DashboardOutlined />, label: '仪表盘' },
 ];
 
 export const ComponentSider = () => {
@@ -124,7 +118,7 @@ export const ComponentSider = () => {
     const [getTenantStatus, setTenantStatus] = useState(null)
 
     const {
-        token: { colorBgContainer, borderRadiusLG },
+        token: { colorBgContainer },
     } = theme.useToken()
 
     const handleMenuClick = (key, path) => {
@@ -134,31 +128,26 @@ export const ComponentSider = () => {
         }
     };
 
-    const renderMenuItems = (items) => {
+    const convertToMenuItems = (items) => {
         return items.map(item => {
             if (item.children) {
-                return (
-                    <SubMenu key={item.key} icon={item.icon} title={item.label}>
-                        {item.children.map(child => (
-                            <Menu.Item
-                                key={child.key}
-                                onClick={() => handleMenuClick(child.key, child.path)}
-                            >
-                                {child.label}
-                            </Menu.Item>
-                        ))}
-                    </SubMenu>
-                );
+                return {
+                    key: item.key,
+                    icon: item.icon,
+                    label: item.label,
+                    children: item.children.map(child => ({
+                        key: child.key,
+                        label: child.label,
+                        onClick: () => handleMenuClick(child.key, child.path),
+                    })),
+                };
             }
-            return (
-                <Menu.Item
-                    key={item.key}
-                    icon={item.icon}
-                    onClick={() => handleMenuClick(item.key, item.path)}
-                >
-                    {item.label}
-                </Menu.Item>
-            );
+            return {
+                key: item.key,
+                icon: item.icon,
+                label: item.label,
+                onClick: () => handleMenuClick(item.key, item.path),
+            };
         });
     };
 
@@ -167,20 +156,140 @@ export const ComponentSider = () => {
         navigate("/login")
     }
 
-    const userMenu = (
-        <Menu mode="vertical">
-            <Menu.Item key="profile" icon={<UserOutlined />}>
-                <Link to="/profile">个人信息</Link>
-            </Menu.Item>
-            <Menu.Divider />
-            <Menu.Item key="logout" icon={<LogoutOutlined />} onClick={handleLogout} danger>
-                退出登录
-            </Menu.Item>
-        </Menu>
-    )
+    const userPopoverMenuItems = [
+        {
+            key: 'profile',
+            icon: <UserOutlined />,
+            label: <Link to="/profile">个人信息</Link>,
+        },
+        {
+            type: 'divider',
+        },
+        {
+            key: 'logout',
+            icon: <LogoutOutlined />,
+            label: '退出登录',
+            danger: true,
+            onClick: handleLogout,
+        },
+    ]
 
     useEffect(() => {
         fetchUserInfo()
+        
+        // 添加现代化黑橙主题样式
+        const style = document.createElement('style');
+        style.textContent = `
+            /* 主菜单项样式 */
+            .ant-menu-dark .ant-menu-item {
+                color: #CCCCCC !important;
+                border-radius: 8px !important;
+                margin: 4px 8px !important;
+                padding: 0 16px !important;
+                height: 44px !important;
+                line-height: 44px !important;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            }
+            
+            /* 选中状态 - 橙色渐变背景 */
+            .ant-menu-dark .ant-menu-item-selected {
+                background: linear-gradient(135deg, #FF9900 0%, #FFB84D 100%) !important;
+                color: #000 !important;
+                font-weight: 600 !important;
+                box-shadow: 0 4px 12px rgba(255, 153, 0, 0.3) !important;
+            }
+            
+            .ant-menu-dark .ant-menu-item-selected .ant-menu-item-icon {
+                color: #000 !important;
+            }
+            
+            /* 悬停效果 */
+            .ant-menu-dark .ant-menu-item:hover:not(.ant-menu-item-selected) {
+                background: rgba(255, 153, 0, 0.1) !important;
+                color: #FF9900 !important;
+                transform: translateX(4px) !important;
+            }
+            
+            .ant-menu-dark .ant-menu-item:hover:not(.ant-menu-item-selected) .ant-menu-item-icon {
+                color: #FF9900 !important;
+            }
+            
+            /* 子菜单样式 */
+            .ant-menu-dark .ant-menu-submenu-title {
+                color: #CCCCCC !important;
+                border-radius: 8px !important;
+                margin: 4px 8px !important;
+                padding: 0 16px !important;
+                height: 44px !important;
+                line-height: 44px !important;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            }
+            
+            .ant-menu-dark .ant-menu-submenu-selected > .ant-menu-submenu-title {
+                background: linear-gradient(135deg, #FF9900 0%, #FFB84D 100%) !important;
+                color: #000 !important;
+                font-weight: 600 !important;
+                box-shadow: 0 4px 12px rgba(255, 153, 0, 0.3) !important;
+            }
+            
+            .ant-menu-dark .ant-menu-submenu-selected > .ant-menu-submenu-title .ant-menu-submenu-arrow {
+                color: #000 !important;
+            }
+            
+            .ant-menu-dark .ant-menu-submenu-title:hover:not(.ant-menu-submenu-selected) {
+                background: rgba(255, 153, 0, 0.1) !important;
+                color: #FF9900 !important;
+                transform: translateX(4px) !important;
+            }
+            
+            .ant-menu-dark .ant-menu-submenu-title:hover:not(.ant-menu-submenu-selected) .ant-menu-submenu-arrow {
+                color: #FF9900 !important;
+            }
+            
+            /* 子菜单内容 */
+            .ant-menu-dark .ant-menu-sub {
+                background: rgba(0, 0, 0, 0.8) !important;
+                border-radius: 8px !important;
+                margin: 4px 16px !important;
+                padding: 8px 0 !important;
+                backdrop-filter: blur(10px) !important;
+            }
+            
+            .ant-menu-dark .ant-menu-sub .ant-menu-item {
+                margin: 2px 8px !important;
+                padding-left: 24px !important;
+                height: 36px !important;
+                line-height: 36px !important;
+                font-size: 13px !important;
+            }
+            
+            /* 滚动条样式 */
+            .ant-layout-sider-children::-webkit-scrollbar {
+                width: 6px !important;
+            }
+            
+            .ant-layout-sider-children::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.1) !important;
+                border-radius: 3px !important;
+            }
+            
+            .ant-layout-sider-children::-webkit-scrollbar-thumb {
+                background: #FF9900 !important;
+                border-radius: 3px !important;
+            }
+            
+            .ant-layout-sider-children::-webkit-scrollbar-thumb:hover {
+                background: #FFB84D !important;
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // 清理函数
+        return () => {
+            if (document.head.contains(style)) {
+                document.head.removeChild(style);
+            }
+        };
     }, [])
 
     const fetchUserInfo = async () => {
@@ -256,15 +365,12 @@ export const ComponentSider = () => {
         window.location.reload();
     }
 
-    const tenantMenu = (
-        <Menu selectable defaultSelectedKeys={[getTenantIndex()]} onSelect={changeTenant}>
-            {tenantList.map((item) => (
-                <Menu.Item key={item.index} name={item.label} value={item.value}>
-                    {item.label}
-                </Menu.Item>
-            ))}
-        </Menu>
-    )
+    const tenantMenuItems = tenantList.map((item) => ({
+        key: item.index.toString(),
+        label: item.label,
+        name: item.label,
+        value: item.value,
+    }))
 
     if (loading || !getTenantStatus) {
         return (
@@ -277,7 +383,9 @@ export const ComponentSider = () => {
                     background: colorBgContainer,
                 }}
             >
-                <Spin tip="加载中..." size="large" />
+                <Spin size="large">
+                    <div style={{ padding: '50px' }}>加载中...</div>
+                </Spin>
             </div>
         )
     }
@@ -291,7 +399,7 @@ export const ComponentSider = () => {
                 borderRadius: '12px',
                 display: 'flex',
                 flexDirection: 'column',
-                position: 'relative', 
+                position: 'relative',
             }}
             theme="dark"
         >
@@ -310,13 +418,22 @@ export const ComponentSider = () => {
                     marginTop: '-70px',
                 }}>
                     <img
-                        src={logoIcon || "/placeholder.svg"}
+                        src={logoIcon}
                         alt="WatchAlert Logo"
-                        style={{ width: "160px", height: "140px", borderRadius: "8px" }}
+                        style={{ width: "160px", height: "140px", borderRadius: "8px", marginLeft: "6px" }}
                     />
                 </div>
 
-                <Dropdown overlay={tenantMenu} trigger={["click"]} placement="bottomLeft">
+                <Dropdown 
+                    menu={{ 
+                        items: tenantMenuItems, 
+                        selectable: true, 
+                        defaultSelectedKeys: [getTenantIndex()],
+                        onSelect: changeTenant 
+                    }} 
+                    trigger={["click"]} 
+                    placement="bottomLeft"
+                >
                     <div style={{
                         display: 'flex',
                         marginTop: '-40px',
@@ -340,7 +457,13 @@ export const ComponentSider = () => {
                 </Dropdown>
             </div>
 
-            <Divider style={{margin: '0', background: 'rgba(255, 255, 255, 0.1)'}}/>
+            <Divider style={{
+                margin: '0 16px 16px', 
+                background: 'linear-gradient(90deg, transparent 0%, #FF9900 50%, transparent 100%)',
+                height: '2px',
+                borderRadius: '1px',
+                marginLeft: '5px'
+            }}/>
 
             {/* 主内容，预留底部空间 */}
             <div
@@ -358,9 +481,8 @@ export const ComponentSider = () => {
                     mode="inline"
                     selectedKeys={[selectedMenuKey]}
                     style={{ background: 'transparent'}}
-                >
-                    {renderMenuItems(userInfo?.role === 'admin' ? adminMenuItems : userMenuItems)}
-                </Menu>
+                    items={convertToMenuItems(userInfo?.role === 'admin' ? adminMenuItems : userMenuItems)}
+                />
             </div>
 
             {/* 绝对定位底部用户信息 */}
@@ -369,11 +491,16 @@ export const ComponentSider = () => {
                 left: 0,
                 bottom: 0,
                 width: '100%',
-                padding: '10px',
-                borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-                background: '#000',
+                padding: '16px',
+                borderTop: '1px solid rgba(255, 153, 0, 0.2)',
+                background: 'linear-gradient(180deg, rgba(0,0,0,0.8) 0%, #000 100%)',
+                backdropFilter: 'blur(10px)',
             }}>
-                <Popover content={userMenu} trigger="click" placement="topRight">
+                <Popover 
+                    content={<Menu mode="vertical" items={userPopoverMenuItems} />} 
+                    trigger="click" 
+                    placement="topRight"
+                >
                     <div style={{
                         display: "flex",
                         alignItems: "center",
@@ -384,10 +511,14 @@ export const ComponentSider = () => {
                     }}>
                         <Avatar
                             style={{
-                                backgroundColor: "#7265e6",
+                                background: "linear-gradient(135deg, #FF9900 0%, #FFB84D 100%)",
+                                color: "#000",
+                                fontWeight: "bold",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
+                                border: "2px solid rgba(255, 153, 0, 0.3)",
+                                boxShadow: "0 2px 8px rgba(255, 153, 0, 0.3)"
                             }}
                             size="default"
                         >
